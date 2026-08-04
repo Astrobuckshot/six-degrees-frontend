@@ -221,7 +221,6 @@ function PathResult({ path, loading, error, searched }) {
               const label = step.connectionType + (step.context ? ` · ${step.context}` : '')
 
               const midX = (prev.x + pos.x) / 2
-              const midY = (prev.y + pos.y) / 2
               let labelX, labelY
 
               if (Math.abs(prev.y - pos.y) < 1) {
@@ -229,13 +228,16 @@ function PathResult({ path, loading, error, searched }) {
                 // stay centered between them, lowered enough to clear
                 // both frames and not crowd the name row beneath them.
                 labelX = midX
-                labelY = prev.y + FRAME_HALF_HEIGHT + 30
+                labelY = prev.y + FRAME_HALF_HEIGHT + 40
               } else {
-                // Diagonal segment: sit at the midpoint between the two
-                // people, shifted up off the dotted line itself so it
-                // doesn't land on top of the dots.
-                labelX = midX
-                labelY = midY - 22
+                // Diagonal segment: hang mostly under the OUTER (shallower)
+                // person's own column - roughly vertically parallel to
+                // them - rather than centered between the pair, and sit
+                // well down the segment rather than near the top.
+                const shallow = prev.y <= pos.y ? prev : pos
+                const deep = prev.y <= pos.y ? pos : prev
+                labelX = shallow.x * 0.85 + deep.x * 0.15
+                labelY = shallow.y + (deep.y - shallow.y) * 0.65
               }
 
               return (
