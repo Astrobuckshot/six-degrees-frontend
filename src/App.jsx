@@ -105,8 +105,8 @@ function computeArcFractions(count) {
   const positions = []
   for (let i = 0; i < count; i++) {
     const t = count === 1 ? 0.5 : i / (count - 1)
-    const x = 0.08 + t * 0.84
-    const y = 0.18 + Math.sin(t * Math.PI) * 0.52
+    const x = 0.06 + t * 0.88
+    const y = 0.16 + Math.sin(t * Math.PI) * 0.60
     positions.push({ x, y })
   }
   return positions
@@ -115,11 +115,6 @@ function computeArcFractions(count) {
 function getInitial(name) {
   return name ? name.trim().charAt(0).toUpperCase() : '?'
 }
-
-// Real, fixed pixel dimensions of the frame + name block, used to place
-// connection labels precisely relative to them (not just proportionally).
-const FRAME_HALF_HEIGHT = 48 // half of the 96px oval frame
-const NAME_BLOCK_HEIGHT = 34 // margin-top + line height of the name text below a frame
 
 function PathResult({ path, loading, error, searched }) {
   const containerRef = useRef(null)
@@ -166,6 +161,14 @@ function PathResult({ path, loading, error, searched }) {
   const REVEAL_STEP_SECONDS = 0.4
   const ready = size.width > 0
 
+  // Frame size scales down on narrow screens instead of staying fixed,
+  // so photos don't dominate a small mobile viewport. Everything else
+  // (label clearance) is computed FROM this, so spacing stays correct
+  // at any screen size rather than only looking right at one width.
+  const frameWidth = Math.max(52, Math.min(74, size.width * 0.105))
+  const frameHeight = frameWidth * (96 / 74)
+  const frameHalfHeight = frameHeight / 2
+
   return (
     <div className="path-result">
       <div className="path-summary">
@@ -200,7 +203,10 @@ function PathResult({ path, loading, error, searched }) {
                   className="path-node"
                   style={{ left: `${pos.x}px`, top: `${pos.y}px`, animationDelay: `${delay}s` }}
                 >
-                  <div className="path-node-frame">
+                  <div
+                    className="path-node-frame"
+                    style={{ width: `${frameWidth}px`, height: `${frameHeight}px` }}
+                  >
                     <div className="path-node-photo">
                       {step.photoUrl ? (
                         <img src={step.photoUrl} alt={step.name} loading="lazy" />
@@ -228,7 +234,7 @@ function PathResult({ path, loading, error, searched }) {
                 // stay centered between them, lowered enough to clear
                 // both frames and not crowd the name row beneath them.
                 labelX = midX
-                labelY = prev.y + FRAME_HALF_HEIGHT + 52
+                labelY = prev.y + frameHalfHeight + frameHalfHeight * 1.1
               } else {
                 // Diagonal segment: hang mostly under the OUTER (shallower)
                 // person's own column - roughly vertically parallel to
@@ -237,7 +243,9 @@ function PathResult({ path, loading, error, searched }) {
                 const shallow = prev.y <= pos.y ? prev : pos
                 const deep = prev.y <= pos.y ? pos : prev
                 labelX = shallow.x * 0.85 + deep.x * 0.15
-                labelY = shallow.y + (deep.y - shallow.y) * 0.65
+                const proportional = shallow.y + (deep.y - shallow.y) * 0.65
+                const clearOfName = shallow.y + frameHalfHeight + 34 // guaranteed below the name text, any screen size
+                labelY = Math.max(proportional, clearOfName)
               }
 
               return (
