@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 // Small helper: waits for the person to stop typing before searching,
 // so we're not hammering the API on every keystroke.
@@ -98,13 +98,15 @@ function PersonSearchBox({ label, selectedPerson, onSelect }) {
 
 // Computes each person's position along a gentle downward arc between
 // the two endpoints - mirrors the "Person A and B on the outer ends,
-// with the path dipping down through the middle" sketch.
-function computeArcPositions(count) {
+// with the path dipping down through the middle" sketch. Positions are
+// fractions (0-1) of the container; converted to real pixels at render
+// time so spacing stays consistent regardless of screen width.
+function computeArcFractions(count) {
   const positions = []
   for (let i = 0; i < count; i++) {
     const t = count === 1 ? 0.5 : i / (count - 1)
-    const x = 8 + t * 84 // percent, small margin on each side
-    const y = 18 + Math.sin(t * Math.PI) * 52 // percent, dips down in the middle
+    const x = 0.08 + t * 0.84
+    const y = 0.18 + Math.sin(t * Math.PI) * 0.52
     positions.push({ x, y })
   }
   return positions
@@ -114,7 +116,30 @@ function getInitial(name) {
   return name ? name.trim().charAt(0).toUpperCase() : '?'
 }
 
+// Real, fixed pixel dimensions of the frame + name block, used to place
+// connection labels precisely relative to them (not just proportionally).
+const FRAME_HALF_HEIGHT = 48 // half of the 96px oval frame
+const NAME_BLOCK_HEIGHT = 34 // margin-top + line height of the name text below a frame
+
 function PathResult({ path, loading, error, searched }) {
+  const containerRef = useRef(null)
+  const [size, setSize] = useState({ width: 0, height: 0 })
+
+  useEffect(() => {
+    if (!containerRef.current) return
+    const el = containerRef.current
+
+    function measure() {
+      const width = el.offsetWidth
+      setSize({ width, height: width * 0.62 })
+    }
+
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [path])
+
   if (loading) {
     return <div className="result-status">Searching for a connection...</div>
   }
@@ -136,8 +161,10 @@ function PathResult({ path, loading, error, searched }) {
     )
   }
 
-  const positions = computeArcPositions(path.length)
+  const fractions = computeArcFractions(path.length)
+  const positions = fractions.map((f) => ({ x: f.x * size.width, y: f.y * size.height }))
   const REVEAL_STEP_SECONDS = 0.4
+  const ready = size.width > 0
 
   return (
     <div className="path-result">
@@ -147,66 +174,80 @@ function PathResult({ path, loading, error, searched }) {
           : `Found in ${path.length - 1} step${path.length - 1 === 1 ? '' : 's'}`}
       </div>
 
-      <div className="path-arc-container">
-        <svg className="path-arc-svg" viewBox="0 0 100 62" preserveAspectRatio="none">
-          {positions.slice(1).map((pos, idx) => {
-            const prev = positions[idx]
-            const delay = (idx + 1) * REVEAL_STEP_SECONDS
-            return (
-              <path
-                key={idx}
-                d={`M ${prev.x} ${prev.y * 0.62} L ${pos.x} ${pos.y * 0.62}`}
-                style={{ animationDelay: `${delay}s` }}
-              />
-            )
-          })}
-        </svg>
+      <div className="path-arc-container" ref={containerRef}>
+        {ready && (
+          <>
+            <svg className="path-arc-svg" viewBox={`0 0 ${size.width} ${size.height}`} preserveAspectRatio="none">
+              {positions.slice(1).map((pos, idx) => {
+                const prev = positions[idx]
+                const delay = (idx + 1) * REVEAL_STEP_SECONDS
+                return (
+                  <path
+                    key={idx}
+                    d={`M ${prev.x} ${prev.y} L ${pos.x} ${pos.y}`}
+                    style={{ animationDelay: `${delay}s` }}
+                  />
+                )
+              })}
+            </svg>
 
-        {path.map((step, i) => {
-          const pos = positions[i]
-          const delay = i * REVEAL_STEP_SECONDS
-          return (
-            <div
-              key={`${step.id}-${i}`}
-              className="path-node"
-              style={{ left: `${pos.x}%`, top: `${pos.y}%`, animationDelay: `${delay}s` }}
-            >
-              <div className="path-node-frame">
-                <div className="path-node-photo">
-                  {step.photoUrl ? (
-                    <img src={step.photoUrl} alt={step.name} loading="lazy" />
-                  ) : (
-                    <span className="path-node-initial">{getInitial(step.name)}</span>
-                  )}
+            {path.map((step, i) => {
+              const pos = positions[i]
+              const delay = i * REVEAL_STEP_SECONDS
+              return (
+                <div
+                  key={`${step.id}-${i}`}
+                  className="path-node"
+                  style={{ left: `${pos.x}px`, top: `${pos.y}px`, animationDelay: `${delay}s` }}
+                >
+                  <div className="path-node-frame">
+                    <div className="path-node-photo">
+                      {step.photoUrl ? (
+                        <img src={step.photoUrl} alt={step.name} loading="lazy" />
+                      ) : (
+                        <span className="path-node-initial">{getInitial(step.name)}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="path-node-name">{step.name}</div>
                 </div>
-              </div>
-              <div className="path-node-name">{step.name}</div>
-            </div>
-          )
-        })}
+              )
+            })}
 
-        {positions.slice(1).map((pos, idx) => {
-          const prev = positions[idx]
-          const step = path[idx + 1]
-          const midX = (prev.x + pos.x) / 2
-          // Bias the label toward whichever person sits lower on the arc,
-          // so it doesn't land at the same height as the higher person's
-          // name text right below their frame.
-          const upperY = Math.min(prev.y, pos.y)
-          const lowerY = Math.max(prev.y, pos.y)
-          const midY = upperY * 0.22 + lowerY * 0.78
-          const delay = (idx + 1) * REVEAL_STEP_SECONDS + 0.15
-          const label = step.connectionType + (step.context ? ` · ${step.context}` : '')
-          return (
-            <div
-              key={idx}
-              className="path-connection-label"
-              style={{ left: `${midX}%`, top: `${midY}%`, animationDelay: `${delay}s` }}
-            >
-              {label}
-            </div>
-          )
-        })}
+            {positions.slice(1).map((pos, idx) => {
+              const prev = positions[idx]
+              const step = path[idx + 1]
+              const delay = (idx + 1) * REVEAL_STEP_SECONDS + 0.15
+              const label = step.connectionType + (step.context ? ` · ${step.context}` : '')
+
+              // Same depth (a "valley" segment, e.g. two people at the
+              // bottom of the arc): place the label between them, level
+              // with their names, clear of the frames/flourishes above.
+              // Different depths: anchor the label directly under the
+              // LOWER person's name, since that's the person it reads
+              // most naturally as belonging to.
+              let labelX, labelY
+              if (Math.abs(prev.y - pos.y) < 1) {
+                labelX = (prev.x + pos.x) / 2
+                labelY = prev.y + FRAME_HALF_HEIGHT + NAME_BLOCK_HEIGHT / 2
+              } else {
+                const deeper = prev.y > pos.y ? prev : pos
+                labelX = deeper.x
+                labelY = deeper.y + FRAME_HALF_HEIGHT + NAME_BLOCK_HEIGHT + 14
+              }
+
+              return (
+                <div
+                  key={idx}
+                  className="path-connection-label"
+                  style={{ left: `${labelX}px`, top: `${labelY}px`, animationDelay: `${delay}s` }}
+                >
+                  {label}
+                </div>
+              )
+            })}
+          </>
+        )}
       </div>
     </div>
   )
