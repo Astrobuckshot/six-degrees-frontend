@@ -189,7 +189,12 @@ function PathResult({ path, loading, error, searched }) {
           const prev = positions[idx]
           const step = path[idx + 1]
           const midX = (prev.x + pos.x) / 2
-          const midY = (prev.y + pos.y) / 2
+          // Bias the label toward whichever person sits lower on the arc,
+          // so it doesn't land at the same height as the higher person's
+          // name text right below their frame.
+          const upperY = Math.min(prev.y, pos.y)
+          const lowerY = Math.max(prev.y, pos.y)
+          const midY = upperY * 0.22 + lowerY * 0.78
           const delay = (idx + 1) * REVEAL_STEP_SECONDS + 0.15
           const label = step.connectionType + (step.context ? ` · ${step.context}` : '')
           return (
