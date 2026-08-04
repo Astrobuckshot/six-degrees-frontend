@@ -220,20 +220,22 @@ function PathResult({ path, loading, error, searched }) {
               const delay = (idx + 1) * REVEAL_STEP_SECONDS + 0.15
               const label = step.connectionType + (step.context ? ` · ${step.context}` : '')
 
-              // Same depth (a "valley" segment, e.g. two people at the
-              // bottom of the arc): place the label between them, level
-              // with their names, clear of the frames/flourishes above.
-              // Different depths: anchor the label directly under the
-              // LOWER person's name, since that's the person it reads
-              // most naturally as belonging to.
+              const midX = (prev.x + pos.x) / 2
+              const midY = (prev.y + pos.y) / 2
               let labelX, labelY
+
               if (Math.abs(prev.y - pos.y) < 1) {
-                labelX = (prev.x + pos.x) / 2
-                labelY = prev.y + FRAME_HALF_HEIGHT + NAME_BLOCK_HEIGHT / 2
+                // Same depth (e.g. two people at the bottom of the arc):
+                // stay centered between them, lowered enough to clear
+                // both frames and not crowd the name row beneath them.
+                labelX = midX
+                labelY = prev.y + FRAME_HALF_HEIGHT + 30
               } else {
-                const deeper = prev.y > pos.y ? prev : pos
-                labelX = deeper.x
-                labelY = deeper.y + FRAME_HALF_HEIGHT + NAME_BLOCK_HEIGHT + 14
+                // Diagonal segment: sit at the midpoint between the two
+                // people, shifted up off the dotted line itself so it
+                // doesn't land on top of the dots.
+                labelX = midX
+                labelY = midY - 22
               }
 
               return (
