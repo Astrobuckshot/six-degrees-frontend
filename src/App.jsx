@@ -228,7 +228,7 @@ function PathResult({ path, loading, error, searched }) {
                 // stay centered between them, lowered enough to clear
                 // both frames and not crowd the name row beneath them.
                 labelX = midX
-                labelY = prev.y + FRAME_HALF_HEIGHT + 40
+                labelY = prev.y + FRAME_HALF_HEIGHT + 52
               } else {
                 // Diagonal segment: hang mostly under the OUTER (shallower)
                 // person's own column - roughly vertically parallel to
