@@ -254,7 +254,13 @@ function PathResult({ path, loading, error, searched }) {
                   className="path-connection-label"
                   style={{ left: `${labelX}px`, top: `${labelY}px`, animationDelay: `${delay}s` }}
                 >
-                  {label}
+                  {step.showSourceLink && step.sourceLink ? (
+                    <a href={step.sourceLink} target="_blank" rel="noopener noreferrer">
+                      {label}
+                    </a>
+                  ) : (
+                    label
+                  )}
                 </div>
               )
             })}

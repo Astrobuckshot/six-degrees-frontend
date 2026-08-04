@@ -48,6 +48,8 @@ export default async function handler(req, res) {
       photoUrl: row.photo_url,
       connectionType: row.connection_type,
       context: row.context,
+      sourceLink: row.source_link,
+      showSourceLink: row.show_source_link,
     }));
 
     return res.status(200).json({ path });
