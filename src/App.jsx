@@ -96,6 +96,24 @@ function PersonSearchBox({ label, selectedPerson, onSelect }) {
   )
 }
 
+// Computes each person's position along a gentle downward arc between
+// the two endpoints - mirrors the "Person A and B on the outer ends,
+// with the path dipping down through the middle" sketch.
+function computeArcPositions(count) {
+  const positions = []
+  for (let i = 0; i < count; i++) {
+    const t = count === 1 ? 0.5 : i / (count - 1)
+    const x = 8 + t * 84 // percent, small margin on each side
+    const y = 18 + Math.sin(t * Math.PI) * 52 // percent, dips down in the middle
+    positions.push({ x, y })
+  }
+  return positions
+}
+
+function getInitial(name) {
+  return name ? name.trim().charAt(0).toUpperCase() : '?'
+}
+
 function PathResult({ path, loading, error, searched }) {
   if (loading) {
     return <div className="result-status">Searching for a connection...</div>
@@ -118,26 +136,73 @@ function PathResult({ path, loading, error, searched }) {
     )
   }
 
+  const positions = computeArcPositions(path.length)
+  const REVEAL_STEP_SECONDS = 0.4
+
   return (
     <div className="path-result">
       <div className="path-summary">
         {path.length - 1 === 0
-          ? 'Same person!'
+          ? 'Same person'
           : `Found in ${path.length - 1} step${path.length - 1 === 1 ? '' : 's'}`}
       </div>
-      <ol className="path-steps">
-        {path.map((step, i) => (
-          <li key={`${step.id}-${i}`}>
-            {i > 0 && (
-              <div className="path-connection">
-                {step.connectionType}
-                {step.context ? ` (${step.context})` : ''}
+
+      <div className="path-arc-container">
+        <svg className="path-arc-svg" viewBox="0 0 100 62" preserveAspectRatio="none">
+          {positions.slice(1).map((pos, idx) => {
+            const prev = positions[idx]
+            const delay = (idx + 1) * REVEAL_STEP_SECONDS
+            return (
+              <path
+                key={idx}
+                d={`M ${prev.x} ${prev.y * 0.62} L ${pos.x} ${pos.y * 0.62}`}
+                style={{ animationDelay: `${delay}s` }}
+              />
+            )
+          })}
+        </svg>
+
+        {path.map((step, i) => {
+          const pos = positions[i]
+          const delay = i * REVEAL_STEP_SECONDS
+          return (
+            <div
+              key={`${step.id}-${i}`}
+              className="path-node"
+              style={{ left: `${pos.x}%`, top: `${pos.y}%`, animationDelay: `${delay}s` }}
+            >
+              <div className="path-node-frame">
+                <div className="path-node-photo">
+                  {step.photoUrl ? (
+                    <img src={step.photoUrl} alt={step.name} loading="lazy" />
+                  ) : (
+                    <span className="path-node-initial">{getInitial(step.name)}</span>
+                  )}
+                </div>
               </div>
-            )}
-            <div className="path-person">{step.name}</div>
-          </li>
-        ))}
-      </ol>
+              <div className="path-node-name">{step.name}</div>
+            </div>
+          )
+        })}
+
+        {positions.slice(1).map((pos, idx) => {
+          const prev = positions[idx]
+          const step = path[idx + 1]
+          const midX = (prev.x + pos.x) / 2
+          const midY = (prev.y + pos.y) / 2
+          const delay = (idx + 1) * REVEAL_STEP_SECONDS + 0.15
+          const label = step.connectionType + (step.context ? ` · ${step.context}` : '')
+          return (
+            <div
+              key={idx}
+              className="path-connection-label"
+              style={{ left: `${midX}%`, top: `${midY}%`, animationDelay: `${delay}s` }}
+            >
+              {label}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

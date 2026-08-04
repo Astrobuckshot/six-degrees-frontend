@@ -1,31 +1,86 @@
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  --bg-center: #6b2f13;
+  --bg-mid: #3a1608;
+  --bg-edge: #0c0503;
+
+  --gold-bright: #f0c869;
+  --gold: #d4a548;
+  --gold-dark: #8b6420;
+  --gold-shadow: #4a3210;
+
+  --ink: #0c0503;
+  --cream: #f5e6c8;
+  --cream-dim: #c9b48f;
+
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-caption: 'Cormorant Garamond', Georgia, serif;
+}
+
 * {
   box-sizing: border-box;
 }
 
+html, body {
+  min-height: 100%;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #14151a;
-  color: #e8e8ea;
+  font-family: var(--font-body);
+  color: var(--cream);
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, var(--bg-center) 0%, var(--bg-mid) 55%, var(--bg-edge) 100%);
+  background-attachment: fixed;
+  position: relative;
+}
+
+/* Subtle woven/woodgrain texture overlay, built with layered gradients
+   rather than an image - keeps things fast and crisp at any resolution */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image:
+    repeating-linear-gradient(90deg, #000 0px, transparent 1px, transparent 3px),
+    repeating-linear-gradient(0deg, #000 0px, transparent 1px, transparent 3px);
+  mix-blend-mode: overlay;
 }
 
 .app {
-  max-width: 640px;
+  max-width: 720px;
   margin: 0 auto;
-  padding: 32px 20px 80px;
+  padding: 40px 20px 100px;
+  position: relative;
 }
 
 h1 {
-  font-size: 28px;
-  margin-bottom: 4px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 32px;
+  letter-spacing: 0.01em;
+  margin: 0 0 4px;
+  color: var(--cream);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
 }
 
 .subtitle {
-  color: #9a9aa5;
-  margin-top: 0;
-  margin-bottom: 28px;
+  font-family: var(--font-caption);
+  font-style: italic;
+  font-size: 17px;
+  color: var(--cream-dim);
+  margin: 0 0 32px;
 }
 
+/* ============================================================
+   SEARCH UI - deliberately quiet, so the result bubbles are
+   the one bold moment on the page
+   ============================================================ */
 .search-row {
   display: flex;
   flex-direction: column;
@@ -48,47 +103,60 @@ h1 {
 
 .search-box label {
   display: block;
-  font-size: 13px;
-  color: #9a9aa5;
-  margin-bottom: 6px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cream-dim);
+  margin-bottom: 7px;
 }
 
 .search-box input {
   width: 100%;
-  padding: 10px 12px;
+  padding: 11px 14px;
   font-size: 16px;
-  border-radius: 8px;
-  border: 1px solid #33343c;
-  background: #1c1d24;
-  color: #e8e8ea;
+  font-family: var(--font-body);
+  border-radius: 6px;
+  border: 1px solid rgba(212, 165, 72, 0.25);
+  background: rgba(12, 5, 3, 0.4);
+  color: var(--cream);
+}
+
+.search-box input::placeholder {
+  color: rgba(201, 180, 143, 0.45);
 }
 
 .search-box input:focus {
-  outline: 2px solid #6b7fd7;
-  outline-offset: 1px;
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(212, 165, 72, 0.15);
 }
 
 .selected-person {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: #23252f;
-  border: 1px solid #3a3c4a;
+  padding: 11px 14px;
+  border-radius: 6px;
+  background: rgba(212, 165, 72, 0.1);
+  border: 1px solid rgba(212, 165, 72, 0.3);
+}
+
+.selected-person span {
+  font-family: var(--font-display);
+  font-weight: 500;
 }
 
 .selected-person button {
   background: none;
   border: none;
-  color: #9a9aa5;
+  color: var(--cream-dim);
   font-size: 18px;
   cursor: pointer;
   padding: 0 4px;
 }
 
 .selected-person button:hover {
-  color: #e8e8ea;
+  color: var(--gold-bright);
 }
 
 .match-list {
@@ -99,10 +167,10 @@ h1 {
   top: 100%;
   left: 0;
   right: 0;
-  background: #1c1d24;
-  border: 1px solid #33343c;
-  border-radius: 8px;
-  max-height: 220px;
+  background: #1a0d05;
+  border: 1px solid rgba(212, 165, 72, 0.25);
+  border-radius: 6px;
+  max-height: 240px;
   overflow-y: auto;
   z-index: 10;
 }
@@ -110,91 +178,219 @@ h1 {
 .match-list li button {
   width: 100%;
   text-align: left;
-  padding: 8px 10px;
+  padding: 9px 10px;
   background: none;
   border: none;
-  color: #e8e8ea;
+  color: var(--cream);
   font-size: 15px;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
 }
 
 .match-list li button:hover {
-  background: #2a2c37;
+  background: rgba(212, 165, 72, 0.12);
 }
 
 .search-status {
   margin-top: 6px;
   font-size: 13px;
-  color: #7a7a85;
+  color: var(--cream-dim);
 }
 
 .find-button {
   width: 100%;
-  padding: 12px;
-  font-size: 16px;
+  padding: 13px;
+  font-size: 15px;
   font-weight: 600;
-  border-radius: 8px;
-  border: none;
-  background: #6b7fd7;
-  color: white;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-radius: 6px;
+  border: 1px solid var(--gold-dark);
+  background: linear-gradient(180deg, var(--gold) 0%, var(--gold-dark) 100%);
+  color: #2a1608;
   cursor: pointer;
-  margin-bottom: 24px;
+  margin-bottom: 8px;
+  transition: filter 0.15s ease;
 }
 
 .find-button:disabled {
-  background: #33343c;
-  color: #6a6a75;
+  background: rgba(201, 180, 143, 0.12);
+  border-color: rgba(201, 180, 143, 0.15);
+  color: rgba(201, 180, 143, 0.4);
   cursor: not-allowed;
 }
 
 .find-button:not(:disabled):hover {
-  background: #7f90de;
+  filter: brightness(1.08);
 }
 
 .result-status {
-  color: #9a9aa5;
-  font-size: 15px;
+  font-family: var(--font-caption);
+  font-style: italic;
+  font-size: 17px;
+  color: var(--cream-dim);
+  margin-top: 16px;
 }
 
 .result-error {
-  color: #e57373;
+  color: #e0937a;
+}
+
+/* ============================================================
+   THE PATH RESULT - arc layout with ornate oval frames
+   ============================================================ */
+.path-result {
+  margin-top: 32px;
 }
 
 .path-summary {
-  font-size: 14px;
-  color: #9a9aa5;
-  margin-bottom: 16px;
-}
-
-.path-steps {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.path-steps li {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  font-family: var(--font-caption);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--cream-dim);
+  margin-bottom: 8px;
   text-align: center;
 }
 
-.path-connection {
-  font-size: 13px;
-  color: #7a8fd0;
-  padding: 6px 0;
+.path-arc-container {
+  position: relative;
+  width: 100%;
+  /* height scales with viewport width via padding-bottom trick, keeping
+     the arc's proportions consistent responsively */
+  padding-bottom: 62%;
 }
 
-.path-connection::before {
-  content: '↓ ';
+.path-arc-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
-.path-person {
-  font-size: 17px;
+.path-arc-svg path {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 2;
+  stroke-dasharray: 1 9;
+  stroke-linecap: round;
+  opacity: 0;
+  animation: lineReveal 0.5s ease forwards;
+}
+
+.path-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  animation: bubbleReveal 0.55s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+.path-node-frame {
+  width: 74px;
+  height: 96px;
+  border-radius: 50%;
+  padding: 5px;
+  background: linear-gradient(145deg, var(--gold-bright) 0%, var(--gold) 35%, var(--gold-dark) 75%, var(--gold-bright) 100%);
+  box-shadow:
+    0 0 0 2px var(--gold-shadow),
+    0 8px 18px rgba(0, 0, 0, 0.55),
+    inset 0 0 6px rgba(0, 0, 0, 0.35);
+  position: relative;
+}
+
+.path-node-frame::before {
+  /* small flourish at the top of the frame, echoing an ornate finial */
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  background: linear-gradient(145deg, var(--gold-bright), var(--gold-dark));
+  border-radius: 3px 3px 3px 3px / 6px 6px 2px 2px;
+  transform: translateX(-50%) rotate(45deg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.path-node-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.path-node-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.path-node-initial {
+  font-family: var(--font-display);
+  font-size: 26px;
   font-weight: 600;
-  padding: 10px 18px;
-  border-radius: 999px;
-  background: #23252f;
-  border: 1px solid #3a3c4a;
+  color: var(--gold-dark);
+}
+
+.path-node-name {
+  margin-top: 8px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--cream);
+  text-align: center;
+  max-width: 100px;
+  line-height: 1.25;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+}
+
+.path-connection-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-caption);
+  font-style: italic;
+  font-size: 12.5px;
+  color: var(--cream-dim);
+  background: rgba(12, 5, 3, 0.55);
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+  opacity: 0;
+  animation: labelReveal 0.5s ease forwards;
+}
+
+@keyframes bubbleReveal {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes lineReveal {
+  from { opacity: 0; }
+  to { opacity: 0.8; }
+}
+
+@keyframes labelReveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .path-node, .path-connection-label, .path-arc-svg path {
+    animation: none !important;
+    opacity: 1 !important;
+  }
 }

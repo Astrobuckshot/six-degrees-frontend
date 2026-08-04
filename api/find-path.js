@@ -45,6 +45,7 @@ export default async function handler(req, res) {
     const path = sorted.map((row) => ({
       id: row.person_id,
       name: row.person_name,
+      photoUrl: row.photo_url,
       connectionType: row.connection_type,
       context: row.context,
     }));
