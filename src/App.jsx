@@ -244,7 +244,7 @@ function PathResult({ path, loading, error, searched }) {
                 const deep = prev.y <= pos.y ? pos : prev
                 labelX = shallow.x * 0.85 + deep.x * 0.15
                 const proportional = shallow.y + (deep.y - shallow.y) * 0.65
-                const clearOfName = shallow.y + frameHalfHeight + 34 // guaranteed below the name text, any screen size
+                const clearOfName = shallow.y + frameHalfHeight + 42 // guaranteed below the name text, any screen size
                 labelY = Math.max(proportional, clearOfName)
               }
 
