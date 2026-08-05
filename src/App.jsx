@@ -116,6 +116,18 @@ function getInitial(name) {
   return name ? name.trim().charAt(0).toUpperCase() : '?'
 }
 
+// Category-bucket context values that don't add any new information
+// beyond the connection_type itself (e.g. "sibling · family" or
+// "Vice President of the United States · government"). These come
+// from the original Wikidata relation-type import categories. Specific
+// context like a film title (e.g. "co-star · The Godfather") should
+// still display normally since it's genuinely useful detail.
+const GENERIC_CONTEXTS = new Set([
+  'family', 'government', 'business', 'musician', 'artist',
+  'author', 'comedian', 'director', 'philosopher', 'producer',
+  'religious', 'scientist'
+])
+
 function PathResult({ path, loading, error, searched }) {
   const containerRef = useRef(null)
   const [size, setSize] = useState({ width: 0, height: 0 })
@@ -224,7 +236,9 @@ function PathResult({ path, loading, error, searched }) {
               const prev = positions[idx]
               const step = path[idx + 1]
               const delay = (idx + 1) * REVEAL_STEP_SECONDS + 0.15
-              const label = step.connectionType + (step.context ? ` · ${step.context}` : '')
+              const label =
+                step.connectionType +
+                (step.context && !GENERIC_CONTEXTS.has(step.context) ? ` · ${step.context}` : '')
 
               const midX = (prev.x + pos.x) / 2
               let labelX, labelY
