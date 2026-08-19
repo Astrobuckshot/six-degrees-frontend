@@ -6,6 +6,11 @@
 // Supabase for people whose name contains that text, and returns a short
 // list of matches (used for both live search and disambiguating duplicate
 // names, like the multiple "Nicholson" results you saw in find_path.py).
+//
+// UPDATE: now also returns `descriptor` (a short Wikidata-derived phrase
+// like "American actor" or "footballer") so the frontend can show which
+// same-named person is which -- e.g. "James Brown (singer)" vs.
+// "James Brown (footballer)".
 
 export default async function handler(req, res) {
   const { q } = req.query;
@@ -17,7 +22,7 @@ export default async function handler(req, res) {
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_KEY = process.env.SUPABASE_KEY;
 
-  const url = `${SUPABASE_URL}/rest/v1/people?select=id,name,fame_score&name=ilike.*${encodeURIComponent(
+  const url = `${SUPABASE_URL}/rest/v1/people?select=id,name,fame_score,descriptor&name=ilike.*${encodeURIComponent(
     q.trim()
   )}*&order=fame_score.desc.nullslast&limit=10`;
 
