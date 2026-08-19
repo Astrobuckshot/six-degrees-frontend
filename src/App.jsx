@@ -59,7 +59,12 @@ function PersonSearchBox({ label, selectedPerson, onSelect }) {
       <div className="search-box">
         <label>{label}</label>
         <div className="selected-person">
-          <span>{selectedPerson.name}</span>
+          <span>
+            {selectedPerson.name}
+            {selectedPerson.descriptor && (
+              <span className="match-descriptor"> ({selectedPerson.descriptor})</span>
+            )}
+          </span>
           <button onClick={handleClear} aria-label={`Clear ${label}`}>
             &times;
           </button>
@@ -84,7 +89,12 @@ function PersonSearchBox({ label, selectedPerson, onSelect }) {
         <ul className="match-list">
           {matches.map((person) => (
             <li key={person.id}>
-              <button onClick={() => handleSelect(person)}>{person.name}</button>
+              <button onClick={() => handleSelect(person)}>
+                {person.name}
+                {person.descriptor && (
+                  <span className="match-descriptor"> ({person.descriptor})</span>
+                )}
+              </button>
             </li>
           ))}
         </ul>
