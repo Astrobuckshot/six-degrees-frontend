@@ -132,6 +132,16 @@ function getInitial(name) {
 // from the original Wikidata relation-type import categories. Specific
 // context like a film title (e.g. "co-star · The Godfather") should
 // still display normally since it's genuinely useful detail.
+// Older pipelines bake the year directly into the context text itself,
+// e.g. "The Late Late Show with Craig Ferguson (2006)" - strips a
+// trailing "(YYYY)" so it isn't shown twice now that the year comes
+// from the real date field below.
+const TRAILING_YEAR_RE = / \(\d{4}\)$/
+
+function cleanContext(context) {
+  return context ? context.replace(TRAILING_YEAR_RE, '') : context
+}
+
 const GENERIC_CONTEXTS = new Set([
   'family', 'government', 'business', 'musician', 'artist',
   'author', 'comedian', 'director', 'philosopher', 'producer',
@@ -246,9 +256,12 @@ function PathResult({ path, loading, error, searched }) {
               const prev = positions[idx]
               const step = path[idx + 1]
               const delay = (idx + 1) * REVEAL_STEP_SECONDS + 0.15
+              const year = step.date ? new Date(step.date).getUTCFullYear() : null
+              const displayContext = cleanContext(step.context)
               const label =
                 step.connectionType +
-                (step.context && !GENERIC_CONTEXTS.has(step.context) ? ` · ${step.context}` : '')
+                (displayContext && !GENERIC_CONTEXTS.has(displayContext) ? ` · ${displayContext}` : '') +
+                (year ? ` (${year})` : '')
 
               const midX = (prev.x + pos.x) / 2
               let labelX, labelY
