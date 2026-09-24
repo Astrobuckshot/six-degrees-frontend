@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   const SUPABASE_KEY = process.env.SUPABASE_KEY;
 
   try {
-    const resp = await fetch(`${SUPABASE_URL}/rest/v1/rpc/find_shortest_path`, {
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/rpc/find_shortest_path_v2`, {
       method: 'POST',
       headers: {
         apikey: SUPABASE_KEY,
