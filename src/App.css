@@ -191,6 +191,18 @@ h1 {
   background: rgba(212, 165, 72, 0.12);
 }
 
+/* Short disambiguating label next to same-named people
+   (e.g. "James Brown (singer)" vs "James Brown (footballer)").
+   Matches the quiet italic caption voice already used for
+   .subtitle and .search-status. */
+.match-descriptor {
+  font-family: var(--font-caption);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--cream-dim);
+  font-size: 0.88em;
+}
+
 .search-status {
   margin-top: 6px;
   font-size: 13px;

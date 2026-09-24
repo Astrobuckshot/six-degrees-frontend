@@ -59,7 +59,12 @@ function PersonSearchBox({ label, selectedPerson, onSelect }) {
       <div className="search-box">
         <label>{label}</label>
         <div className="selected-person">
-          <span>{selectedPerson.name}</span>
+          <span>
+            {selectedPerson.name}
+            {selectedPerson.descriptor && (
+              <span className="match-descriptor"> ({selectedPerson.descriptor})</span>
+            )}
+          </span>
           <button onClick={handleClear} aria-label={`Clear ${label}`}>
             &times;
           </button>
@@ -84,7 +89,12 @@ function PersonSearchBox({ label, selectedPerson, onSelect }) {
         <ul className="match-list">
           {matches.map((person) => (
             <li key={person.id}>
-              <button onClick={() => handleSelect(person)}>{person.name}</button>
+              <button onClick={() => handleSelect(person)}>
+                {person.name}
+                {person.descriptor && (
+                  <span className="match-descriptor"> ({person.descriptor})</span>
+                )}
+              </button>
             </li>
           ))}
         </ul>
@@ -122,6 +132,34 @@ function getInitial(name) {
 // from the original Wikidata relation-type import categories. Specific
 // context like a film title (e.g. "co-star · The Godfather") should
 // still display normally since it's genuinely useful detail.
+// Older pipelines bake the year directly into the context text itself,
+// e.g. "The Late Late Show with Craig Ferguson (2006)" - strips a
+// trailing "(YYYY)" so it isn't shown twice now that the year comes
+// from the real date field below.
+const TRAILING_YEAR_RE = / \(\d{4}\)$/
+
+function cleanContext(context) {
+  return context ? context.replace(TRAILING_YEAR_RE, '') : context
+}
+
+// Pulls the year directly off the front of the date string instead of
+// parsing it as a JS Date. Most connections (interview/meeting) store a
+// single clean date like "2006-11-02", which `new Date(...)` handles
+// fine - but every "colleague" connection across the whole database
+// (correspondent mesh, writer mesh, cast mesh, full-year ranges) stores
+// a RANGE string instead, like "2006-01-01 to 2006-12-31". `new
+// Date("2006-01-01 to 2006-12-31")` is Invalid Date, and
+// `.getUTCFullYear()` on that silently returns NaN (falsy), which is
+// why the year was vanishing for every colleague connection in every
+// batch, not just this one. Matching the leading 4 digits works
+// identically for both a plain date and a range, since a range's start
+// year is always first.
+function extractYear(dateStr) {
+  if (!dateStr) return null
+  const match = dateStr.match(/^(\d{4})/)
+  return match ? match[1] : null
+}
+
 const GENERIC_CONTEXTS = new Set([
   'family', 'government', 'business', 'musician', 'artist',
   'author', 'comedian', 'director', 'philosopher', 'producer',
@@ -236,9 +274,12 @@ function PathResult({ path, loading, error, searched }) {
               const prev = positions[idx]
               const step = path[idx + 1]
               const delay = (idx + 1) * REVEAL_STEP_SECONDS + 0.15
+              const year = extractYear(step.date)
+              const displayContext = cleanContext(step.context)
               const label =
                 step.connectionType +
-                (step.context && !GENERIC_CONTEXTS.has(step.context) ? ` · ${step.context}` : '')
+                (displayContext && !GENERIC_CONTEXTS.has(displayContext) ? ` · ${displayContext}` : '') +
+                (year ? ` (${year})` : '')
 
               const midX = (prev.x + pos.x) / 2
               let labelX, labelY
